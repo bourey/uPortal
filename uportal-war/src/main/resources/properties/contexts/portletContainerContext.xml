@@ -44,6 +44,7 @@
         <ref bean="JpaPortletExecutionInterceptor"/>
         <ref bean="LocaleThreadLocalPortletExecutionInterceptor"/>
         <ref bean="RequestContextThreadLocalPortletExecutionInterceptor"/>
+        <ref bean="SecurityContextThreadLocalPortletExecutionInterceptor"/>
         <ref bean="TrackingThreadLocalPortletExecutionInterceptor"/>
         <ref bean="ThreadNamingPortletExecutionInterceptorAdaptor"/>
     </util:list>

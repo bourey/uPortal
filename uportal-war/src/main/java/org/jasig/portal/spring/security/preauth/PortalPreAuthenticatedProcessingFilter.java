@@ -29,7 +29,7 @@ import javax.servlet.http.HttpSession;
 
 import org.jasig.portal.security.IPerson;
 import org.jasig.portal.security.IPersonManager;
-import org.jasig.portal.spring.security.PortalPersonUserDetails;
+import org.jasig.portal.spring.security.authentication.PortalPersonUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;

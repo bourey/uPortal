@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import static org.junit.Assert.assertEquals;
 
 import org.jasig.portal.security.IPerson;
+import org.jasig.portal.spring.security.authentication.PortalPersonUserDetails;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

@@ -23,29 +23,56 @@
 <beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns="http://www.springframework.org/schema/beans" 
        xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="
            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
            http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.0.xsd">
 
-    <!-- Spring Security pre-authentication -->
-    <security:http auto-config='true'>
-        <security:custom-filter position="PRE_AUTH_FILTER" ref="portalPreAuthenticationFilter" />
-        <security:intercept-url pattern="**" />
+    <security:http entry-point-ref="casEntryPoint">
+        <security:form-login />
+        <security:logout />
+        <security:intercept-url pattern="**" access="ROLE_ANONYMOUS,ROLE_USER" />
+        <security:custom-filter ref="anonymousAuthFilter" before="ANONYMOUS_FILTER"/>
+        <security:custom-filter before="FORM_LOGIN_FILTER" ref="casFilter" />
+        <security:session-management session-authentication-strategy-ref="sas"/>
     </security:http>
 
-    <bean id="portalPreAuthenticationFilter"
-        class="org.jasig.portal.spring.security.preauth.PortalPreAuthenticatedProcessingFilter">
-        <property name="authenticationManager" ref="authenticationManager" />
-    </bean>
-  
-    <bean id="preAuthProvider"
-        class="org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider">
-        <property name="preAuthenticatedUserDetailsService" ref="portalPreAuthenticatedUserDetailsService"/>
-    </bean>
-    
     <security:authentication-manager alias="authenticationManager">
-        <security:authentication-provider ref="preAuthProvider"/>
+        <security:authentication-provider ref="casAuthenticationProvider"/>
+        <security:authentication-provider ref="localAccountAuthenticationProvider"/>
+        <security:authentication-provider ref="anonymousAuthenticationProvider"/>
     </security:authentication-manager>
+
+    <bean id="sas"
+        class="org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy"
+        p:migrateSessionAttributes="false"/>
+          
+    <!-- Anonymous authentication bean definitions -->
+    <bean id="anonymousAuthFilter"
+        class="org.jasig.portal.spring.security.authentication.PortalAnonymousAuthenticationFilter"
+        p:key="anon"/>
+    <bean id="anonymousAuthenticationProvider"
+        class="org.springframework.security.authentication.AnonymousAuthenticationProvider"
+        p:key="anon"/>
+
+    <!-- CAS authentication bean definitions -->
+    <bean id="casAuthenticationProvider"
+        class="org.springframework.security.cas.authentication.CasAuthenticationProvider"
+        p:authenticationUserDetailsService-ref="personDirectoryUserDetailsService"
+        p:serviceProperties-ref="serviceProperties" p:key="cas" 
+        p:ticketValidator-ref="casTicketValidator"/>
+    <bean id="casTicketValidator" class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">
+        <constructor-arg index="0"
+            value="${environment.build.cas.protocol}://${environment.build.cas.server}/cas" />
+    </bean>
+    <bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties"
+        p:service="${environment.build.uportal.protocol}://${environment.build.uportal.server}${environment.build.uportal.context}/j_spring_cas_security_check" 
+        p:sendRenew="false"/>
+    <bean id="casFilter" class="org.springframework.security.cas.web.CasAuthenticationFilter"
+        p:sessionAuthenticationStrategy-ref="sas" p:authenticationManager-ref="authenticationManager"/>
+    <bean id="casEntryPoint"
+        class="org.springframework.security.cas.web.CasAuthenticationEntryPoint"
+        p:loginUrl="${environment.build.cas.protocol}://${environment.build.cas.server}/cas/login"/>
 
     <!--  String encryption service -->
     <bean id="stringEncryptionService" class="org.jasig.portal.security.JasyptPBEStringEncryptionServiceImpl">

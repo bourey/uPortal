@@ -20,13 +20,15 @@
 package org.jasig.portal.security.provider;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jasig.portal.security.IPerson;
-import org.jasig.portal.security.PersonFactory;
 import org.jasig.portal.security.PortalSecurityException;
+import org.jasig.portal.spring.security.authentication.PortalPersonUserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * Manages the storage of an IPerson object in a user's session.
@@ -42,25 +44,20 @@ public class SimplePersonManager extends AbstractPersonManager {
    * @return the IPerson object for the incoming request
    */
   public IPerson getPerson (HttpServletRequest request) throws PortalSecurityException {
-    HttpSession session = request.getSession(false);
-    IPerson person = null;
-    // Return the person object if it exists in the user's session
-    if (session != null)
-      person = (IPerson)session.getAttribute(PERSON_SESSION_KEY);
-    if (person == null) {
-      try {
-        // Create a guest person
-        person = PersonFactory.createGuestPerson();
-      } catch (Exception e) {
-        // Log the exception
-        log.error("Exception creating guest person.", e);
-      }
-      // Add this person object to the user's session
-      if (person != null && session != null)
-        session.setAttribute(PERSON_SESSION_KEY, person);
-    }
-    return person;
+      final SecurityContext context = SecurityContextHolder.getContext();
+      final Authentication auth = context.getAuthentication();
+      
+      if (auth != null) {
+          if (auth.getPrincipal() instanceof PortalPersonUserDetails) {
+              final PortalPersonUserDetails userDetails = (PortalPersonUserDetails) auth.getPrincipal();
+              final IPerson person = userDetails.getPerson();
+              return person;
+          }
+      } 
+        
+      return null;
   }
+  
 }
 
 

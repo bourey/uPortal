@@ -313,6 +313,17 @@
         
         <dependency>
             <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-cas-client</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jasig.cas</groupId>
+                    <artifactId>cas-client-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-config</artifactId>
         </dependency>
         
@@ -480,6 +491,7 @@
                     <include>properties/rdbm.properties</include>
                     <include>properties/security.properties</include>
                     <include>properties/contexts/userContext.xml</include>
+                    <include>properties/contexts/securityContext.xml</include>
                 </includes>
             </resource>
             <!-- 
@@ -493,6 +505,7 @@
                     <exclude>properties/rdbm.properties</exclude>
                     <exclude>properties/security.properties</exclude>
                     <exclude>properties/contexts/userContext.xml</exclude>
+                    <exclude>properties/contexts/securityContext.xml</exclude>
                 </excludes>
             </resource>
         </resources>
