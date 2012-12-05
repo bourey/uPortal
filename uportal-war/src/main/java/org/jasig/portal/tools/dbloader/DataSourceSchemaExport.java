@@ -77,6 +77,11 @@ public class DataSourceSchemaExport implements ISchemaExport, HibernateConfigura
     public boolean supports(String persistenceUnit) {
         return this.persistenceUnit.equals(persistenceUnit);
     }
+    
+    @Override
+    public String getPersistenceUnitName() {
+        return this.persistenceUnit;
+    }
 
     @Override
     public void setConfiguration(String persistenceUnit, HibernateConfiguration hibernateConfiguration) {
@@ -88,13 +93,13 @@ public class DataSourceSchemaExport implements ISchemaExport, HibernateConfigura
     @Override
     public void drop(boolean export, String outputFile, boolean append) {
         final String[] dropSQL = configuration.generateDropSchemaScript(dialect);
-        perform(dropSQL, outputFile, append, false);
+        perform(dropSQL, export, outputFile, append, false);
     }
     
     @Override
     public void create(boolean export, String outputFile, boolean append) {
         final String[] createSQL = configuration.generateSchemaCreationScript(dialect);
-        perform(createSQL, outputFile, append, true);
+        perform(createSQL, export, outputFile, append, true);
     }
     
     @Override
@@ -107,31 +112,33 @@ public class DataSourceSchemaExport implements ISchemaExport, HibernateConfigura
         });
         
         final String[] updateSQL = configuration.generateSchemaUpdateScript(dialect, databaseMetadata);
-        perform(updateSQL, outputFile, append, true);
+        perform(updateSQL, export, outputFile, append, true);
     }
 
-    private void perform(String[] sqlCommands, String outputFile, boolean append, boolean failFast) {
+    private void perform(String[] sqlCommands, boolean executeSql, String outputFile, boolean append, boolean failFast) {
         final PrintWriter sqlWriter = getSqlWriter(outputFile, append);
         try {
             for (final String sqlCommand : sqlCommands) {
                 final String formatted = formatter.format(sqlCommand);
                 sqlWriter.println(formatted);
 
-                try {
-                    jdbcOperations.execute(sqlCommand);
-                    logger.info(sqlCommand);
-                }
-                catch (Exception e) {
-                    if (failFast) {
-                        logger.error("Failed to execute: {}\n\t{}", sqlCommand, e.getMessage());
-                        throw new RuntimeException("Failed to execute: " + sqlCommand, e);
+                if (executeSql) {
+                    try {
+                        jdbcOperations.execute(sqlCommand);
+                        logger.info(sqlCommand);
                     }
-                    else {
-                        if (logger.isDebugEnabled()) {
-                            logger.info("Failed to execute: " + sqlCommand, e);
+                    catch (Exception e) {
+                        if (failFast) {
+                            logger.error("Failed to execute: {}\n\t{}", sqlCommand, e.getMessage());
+                            throw new RuntimeException("Failed to execute: " + sqlCommand, e);
                         }
                         else {
-                            logger.info("Failed to execute (probably ignorable): {}", sqlCommand);
+                            if (logger.isDebugEnabled()) {
+                                logger.info("Failed to execute: " + sqlCommand, e);
+                            }
+                            else {
+                                logger.info("Failed to execute (probably ignorable): {}", sqlCommand);
+                            }
                         }
                     }
                 }
